@@ -11,6 +11,8 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/Attribute/GASAttributeSetBase.h"
 #include "AbilitySystem/Components/GASAbilitySystemComponentBase.h"
+#include "DataAssets/CharacterDataAsset.h"
+#include "Net/UnrealNetwork.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AGASCharacter
@@ -61,6 +63,16 @@ AGASCharacter::AGASCharacter()
 	AttributeSet = CreateDefaultSubobject<UGASAttributeSetBase>(TEXT("DefaultAttributeSet"));
 }
 
+void AGASCharacter::PostInitializeComponents()
+{
+
+	if(IsValid(CharacterDataAsset))
+	{
+		SetCharacterData(CharacterDataAsset->CharacterData);
+	}
+	Super::PostInitializeComponents();
+}
+
 
 UAbilitySystemComponent* AGASCharacter::GetAbilitySystemComponent() const
 {
@@ -93,6 +105,28 @@ void AGASCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 	PlayerInputComponent->BindTouch(IE_Released, this, &AGASCharacter::TouchStopped);
 }
 
+FCharacterData AGASCharacter::GetCharacterData() const
+{
+	return CharacterData;
+}
+
+void AGASCharacter::SetCharacterData(const FCharacterData& InCharacterData)
+{
+	CharacterData = InCharacterData;
+
+	InitFromCharacterData(CharacterData);
+}
+
+void AGASCharacter::OnRep_CharacterData()
+{
+	InitFromCharacterData(CharacterData, true);
+}
+
+void AGASCharacter::InitFromCharacterData(const FCharacterData& InCharacterData, bool bFromReplication)
+{
+	
+}
+
 void AGASCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
 	Jump();
@@ -119,21 +153,11 @@ bool AGASCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effec
 	return false;
 }
 
-void AGASCharacter::InitializeAttributes()
-{
-	if(GetLocalRole() == ROLE_Authority && DefaultAttributeSet && AttributeSet)
-	{
-		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
-		EffectContext.AddSourceObject(this);
-		ApplyGameplayEffectToSelf(DefaultAttributeSet, EffectContext);
-	}
-}
-
 void AGASCharacter::GiveAbilities()
 {
 	if(HasAuthority() && AbilitySystemComponent)
 	{
-		for(auto DefaultAbility : DefaultAbilities)
+		for(auto DefaultAbility : CharacterData.Abilities)
 		{
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAbility));
 		}
@@ -147,7 +171,7 @@ void AGASCharacter::ApplyStartupEffects()
 		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
 		EffectContext.AddSourceObject(this);
 
-		for (auto CharacterEffect : DefaultEffects)
+		for (auto CharacterEffect : CharacterData.Effects)
 		{
 			ApplyGameplayEffectToSelf(CharacterEffect, EffectContext);
 		}
@@ -159,8 +183,7 @@ void AGASCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-
-	InitializeAttributes();
+	
 	GiveAbilities();
 	ApplyStartupEffects();
 	
@@ -171,8 +194,6 @@ void AGASCharacter::OnRep_PlayerState()
 	Super::OnRep_PlayerState();
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-
-	InitializeAttributes();
 }
 
 void AGASCharacter::TurnAtRate(float Rate)
@@ -214,4 +235,11 @@ void AGASCharacter::MoveRight(float Value)
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
 	}
+}
+
+void AGASCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGASCharacter, CharacterData);
 }

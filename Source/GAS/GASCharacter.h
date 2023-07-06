@@ -34,7 +34,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
 public:
-	AGASCharacter();
+	AGASCharacter(const FObjectInitializer& ObjectInitializer);
 
 	virtual void PostInitializeComponents() override;
 

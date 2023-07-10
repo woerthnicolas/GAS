@@ -7,8 +7,10 @@
 #include "Abilities//GameplayAbility.h"
 #include "AbilitySystemInterface.h"
 #include "ActionGameTypes.h"
+#include "InputActionValue.h"
 #include "GASCharacter.generated.h"
 
+class UFootstepsComponent;
 class UCharacterDataAsset;
 struct FCharacterData;
 class UGASAbilitySystemComponentBase;
@@ -43,33 +45,11 @@ public:
 	float TurnRateGamepad;
 
 protected:
-
-	/** Called for forwards/backward input */
-	void MoveForward(float Value);
-
-	/** Called for side to side input */
-	void MoveRight(float Value);
-
-	/** 
-	 * Called via input to turn at a given rate. 
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void TurnAtRate(float Rate);
-
-	/**
-	 * Called via input to turn look up/down at a given rate. 
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void LookUpAtRate(float Rate);
-
-	/** Handler for when a touch input begins. */
-	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
-
-	/** Handler for when a touch input stops. */
-	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
-
+	
 	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext);
 
+	virtual void PawnClientRestart() override;
+	
 protected:
 	
 	void GiveAbilities();
@@ -101,6 +81,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetCharacterData(const FCharacterData& InCharacterData);
 
+	UFootstepsComponent* GetFootstepsComponent() const;
+
 protected:
 	UPROPERTY(ReplicatedUsing=OnRep_CharacterData)
 	FCharacterData CharacterData;
@@ -111,6 +93,40 @@ protected:
 	virtual void InitFromCharacterData(const FCharacterData& InCharacterData, bool bFromReplication = false);
 
 	UPROPERTY(EditDefaultsOnly)
-	UCharacterDataAsset* CharacterDataAsset;	
+	UCharacterDataAsset* CharacterDataAsset;
+
+	UPROPERTY(BlueprintReadOnly)
+	class UFootstepsComponent* FootstepsComponent;
+
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	class UInputMappingContext* DefaultMappingContext;
+
+	UPROPERTY(EditDefaultsOnly)
+	class UInputAction* MoveForwardInputAction;
+
+	UPROPERTY(EditDefaultsOnly)
+	class UInputAction* MoveSideInputAction;
+
+	UPROPERTY(EditDefaultsOnly)
+	class UInputAction* TurnInputAction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	class UInputAction* LookUpInputAction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	class UInputAction* JumpInputAction;
+
+	void OnMoveForwardAction(const FInputActionValue& Value);
+
+	void OnMoveSideAction(const FInputActionValue& Value);
+
+	void OnTurnAction(const FInputActionValue& Value);
+
+	void OnLookUpAction(const FInputActionValue& Value);
+
+	void OnJumpActionStarted(const FInputActionValue& Value);
+
+	void OnJumpActionEnded(const FInputActionValue& Value);
 };
 

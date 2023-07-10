@@ -11,15 +11,18 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/Attribute/GASAttributeSetBase.h"
 #include "AbilitySystem/Components/GASAbilitySystemComponentBase.h"
+#include "ActorComponents/FootstepsComponent.h"
 #include "ActorComponents/GASCharacterMovementComponent.h"
 #include "DataAssets/CharacterDataAsset.h"
 #include "Net/UnrealNetwork.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputModule.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AGASCharacter
 
-AGASCharacter::AGASCharacter(const FObjectInitializer& ObjectInitializer)
-: Super(ObjectInitializer.SetDefaultSubobjectClass<UGASCharacterMovementComponent>(CharacterMovementComponentName))
+AGASCharacter::AGASCharacter(const FObjectInitializer& ObjectInitializer): Super(
+	ObjectInitializer.SetDefaultSubobjectClass<UGASCharacterMovementComponent>(CharacterMovementComponentName))
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -52,7 +55,8 @@ AGASCharacter::AGASCharacter(const FObjectInitializer& ObjectInitializer)
 
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	// Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
@@ -63,12 +67,13 @@ AGASCharacter::AGASCharacter(const FObjectInitializer& ObjectInitializer)
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AttributeSet = CreateDefaultSubobject<UGASAttributeSetBase>(TEXT("DefaultAttributeSet"));
+
+	FootstepsComponent = CreateDefaultSubobject<UFootstepsComponent>(TEXT("FootstepsComponent"));
 }
 
 void AGASCharacter::PostInitializeComponents()
 {
-
-	if(IsValid(CharacterDataAsset))
+	if (IsValid(CharacterDataAsset))
 	{
 		SetCharacterData(CharacterDataAsset->CharacterData);
 	}
@@ -86,25 +91,34 @@ UAbilitySystemComponent* AGASCharacter::GetAbilitySystemComponent() const
 
 void AGASCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
-	// Set up gameplay key bindings
-	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	if (UEnhancedInputComponent* PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		if(MoveForwardInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(MoveForwardInputAction, ETriggerEvent::Triggered, this, &AGASCharacter::OnMoveForwardAction);
+		}
 
-	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AGASCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("Move Right / Left", this, &AGASCharacter::MoveRight);
+		if(MoveSideInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(MoveSideInputAction, ETriggerEvent::Triggered, this, &AGASCharacter::OnMoveSideAction);
+		}
+		
+		if(TurnInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(TurnInputAction, ETriggerEvent::Triggered, this, &AGASCharacter::OnTurnAction);
+		}
 
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn Right / Left Mouse", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &AGASCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &AGASCharacter::LookUpAtRate);
-
-	// handle touch devices
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &AGASCharacter::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &AGASCharacter::TouchStopped);
+		if(LookUpInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(LookUpInputAction, ETriggerEvent::Triggered, this, &AGASCharacter::OnLookUpAction);
+		}
+		
+		if(JumpInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Started, this, &AGASCharacter::OnJumpActionStarted);
+			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Completed, this, &AGASCharacter::OnJumpActionEnded);
+		}
+	}
 }
 
 FCharacterData AGASCharacter::GetCharacterData() const
@@ -119,6 +133,11 @@ void AGASCharacter::SetCharacterData(const FCharacterData& InCharacterData)
 	InitFromCharacterData(CharacterData);
 }
 
+UFootstepsComponent* AGASCharacter::GetFootstepsComponent() const
+{
+	return FootstepsComponent;
+}
+
 void AGASCharacter::OnRep_CharacterData()
 {
 	InitFromCharacterData(CharacterData, true);
@@ -126,28 +145,69 @@ void AGASCharacter::OnRep_CharacterData()
 
 void AGASCharacter::InitFromCharacterData(const FCharacterData& InCharacterData, bool bFromReplication)
 {
-	
 }
 
-void AGASCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
+void AGASCharacter::OnMoveForwardAction(const FInputActionValue& Value)
+{
+	const float Magnitude = Value.GetMagnitude();
+	if ((Controller != nullptr) && (Magnitude != 0.0f))
+	{
+		// find out which way is forward
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		// get forward vector
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(Direction, Magnitude);
+	}
+}
+
+void AGASCharacter::OnMoveSideAction(const FInputActionValue& Value)
+{
+	const float Magnitude = Value.GetMagnitude();
+	if ((Controller != nullptr) && (Magnitude != 0.0f))
+	{
+		// find out which way is right
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		// get right vector 
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		// add movement in that direction
+		AddMovementInput(Direction, Magnitude);
+	}
+}
+
+void AGASCharacter::OnTurnAction(const FInputActionValue& Value)
+{
+	AddControllerYawInput(Value.GetMagnitude() * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
+}
+
+void AGASCharacter::OnLookUpAction(const FInputActionValue& Value)
+{
+	AddControllerPitchInput(Value.GetMagnitude() * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
+}
+
+void AGASCharacter::OnJumpActionStarted(const FInputActionValue& Value)
 {
 	Jump();
 }
 
-void AGASCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
+void AGASCharacter::OnJumpActionEnded(const FInputActionValue& Value)
 {
 	StopJumping();
 }
 
 bool AGASCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect,
-	FGameplayEffectContextHandle InEffectContext)
+                                              FGameplayEffectContextHandle InEffectContext)
 {
-	if(!Effect.Get()) return false;
+	if (!Effect.Get()) return false;
 
 	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect, 1, InEffectContext);
-	if(SpecHandle.IsValid())
+	if (SpecHandle.IsValid())
 	{
-		FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(
+			*SpecHandle.Data.Get());
 
 		return ActiveGEHandle.WasSuccessfullyApplied();
 	}
@@ -155,11 +215,26 @@ bool AGASCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effec
 	return false;
 }
 
+void AGASCharacter::PawnClientRestart()
+{
+	Super::PawnClientRestart();
+	
+	if(APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if(UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		{
+			Subsystem->ClearAllMappings();
+
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		}
+	}
+}
+
 void AGASCharacter::GiveAbilities()
 {
-	if(HasAuthority() && AbilitySystemComponent)
+	if (HasAuthority() && AbilitySystemComponent)
 	{
-		for(auto DefaultAbility : CharacterData.Abilities)
+		for (auto DefaultAbility : CharacterData.Abilities)
 		{
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAbility));
 		}
@@ -168,7 +243,7 @@ void AGASCharacter::GiveAbilities()
 
 void AGASCharacter::ApplyStartupEffects()
 {
-	if(GetLocalRole() == ROLE_Authority)
+	if (GetLocalRole() == ROLE_Authority)
 	{
 		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
 		EffectContext.AddSourceObject(this);
@@ -185,10 +260,9 @@ void AGASCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-	
+
 	GiveAbilities();
 	ApplyStartupEffects();
-	
 }
 
 void AGASCharacter::OnRep_PlayerState()
@@ -198,48 +272,7 @@ void AGASCharacter::OnRep_PlayerState()
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
 
-void AGASCharacter::TurnAtRate(float Rate)
-{
-	// calculate delta for this frame from the rate information
-	AddControllerYawInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
-}
-
-void AGASCharacter::LookUpAtRate(float Rate)
-{
-	// calculate delta for this frame from the rate information
-	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
-}
-
-void AGASCharacter::MoveForward(float Value)
-{
-	if ((Controller != nullptr) && (Value != 0.0f))
-	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
-	}
-}
-
-void AGASCharacter::MoveRight(float Value)
-{
-	if ( (Controller != nullptr) && (Value != 0.0f) )
-	{
-		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-	
-		// get right vector 
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
-		AddMovementInput(Direction, Value);
-	}
-}
-
-void AGASCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+void AGASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 

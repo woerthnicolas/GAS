@@ -53,6 +53,9 @@ protected:
 public:
 	virtual void Landed(const FHitResult& Hit) override;
 
+	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+
 protected:
 	
 	void GiveAbilities();
@@ -100,8 +103,7 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	class UFootstepsComponent* FootstepsComponent;
-
-protected:
+	
 	UPROPERTY(EditDefaultsOnly)
 	class UInputMappingContext* DefaultMappingContext;
 
@@ -119,6 +121,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly)
 	class UInputAction* JumpInputAction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	class UInputAction* CrouchInputAction;
 
 	void OnMoveForwardAction(const FInputActionValue& Value);
 
@@ -132,6 +137,10 @@ protected:
 
 	void OnJumpActionEnded(const FInputActionValue& Value);
 
+	void OnCrouchActionStarted(const FInputActionValue& Value);
+
+	void OnCrouchActionEnded(const FInputActionValue& Value);
+
 	// Gameplay Events
 	
 	UPROPERTY(EditDefaultsOnly)
@@ -141,5 +150,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer InAirTags;
+	
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTagContainer CrouchTags;
+
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UGameplayEffect> CrouchStateEffect;
 };
 

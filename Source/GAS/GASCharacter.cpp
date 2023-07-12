@@ -93,30 +93,44 @@ void AGASCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 {
 	if (UEnhancedInputComponent* PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		if(MoveForwardInputAction)
+		if (MoveForwardInputAction)
 		{
-			PlayerEnhancedInputComponent->BindAction(MoveForwardInputAction, ETriggerEvent::Triggered, this, &AGASCharacter::OnMoveForwardAction);
+			PlayerEnhancedInputComponent->BindAction(MoveForwardInputAction, ETriggerEvent::Triggered, this,
+			                                         &AGASCharacter::OnMoveForwardAction);
 		}
 
-		if(MoveSideInputAction)
+		if (MoveSideInputAction)
 		{
-			PlayerEnhancedInputComponent->BindAction(MoveSideInputAction, ETriggerEvent::Triggered, this, &AGASCharacter::OnMoveSideAction);
-		}
-		
-		if(TurnInputAction)
-		{
-			PlayerEnhancedInputComponent->BindAction(TurnInputAction, ETriggerEvent::Triggered, this, &AGASCharacter::OnTurnAction);
+			PlayerEnhancedInputComponent->BindAction(MoveSideInputAction, ETriggerEvent::Triggered, this,
+			                                         &AGASCharacter::OnMoveSideAction);
 		}
 
-		if(LookUpInputAction)
+		if (TurnInputAction)
 		{
-			PlayerEnhancedInputComponent->BindAction(LookUpInputAction, ETriggerEvent::Triggered, this, &AGASCharacter::OnLookUpAction);
+			PlayerEnhancedInputComponent->BindAction(TurnInputAction, ETriggerEvent::Triggered, this,
+			                                         &AGASCharacter::OnTurnAction);
 		}
-		
-		if(JumpInputAction)
+
+		if (LookUpInputAction)
 		{
-			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Started, this, &AGASCharacter::OnJumpActionStarted);
-			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Completed, this, &AGASCharacter::OnJumpActionEnded);
+			PlayerEnhancedInputComponent->BindAction(LookUpInputAction, ETriggerEvent::Triggered, this,
+			                                         &AGASCharacter::OnLookUpAction);
+		}
+
+		if (JumpInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Started, this,
+			                                         &AGASCharacter::OnJumpActionStarted);
+			PlayerEnhancedInputComponent->BindAction(JumpInputAction, ETriggerEvent::Completed, this,
+			                                         &AGASCharacter::OnJumpActionEnded);
+		}
+
+		if (CrouchInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(CrouchInputAction, ETriggerEvent::Started, this,
+			                                         &AGASCharacter::OnCrouchActionStarted);
+			PlayerEnhancedInputComponent->BindAction(CrouchInputAction, ETriggerEvent::Completed, this,
+			                                         &AGASCharacter::OnCrouchActionEnded);
 		}
 	}
 }
@@ -202,6 +216,22 @@ void AGASCharacter::OnJumpActionEnded(const FInputActionValue& Value)
 	//StopJumping();
 }
 
+void AGASCharacter::OnCrouchActionStarted(const FInputActionValue& Value)
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->TryActivateAbilitiesByTag(CrouchTags, true);
+	}
+}
+
+void AGASCharacter::OnCrouchActionEnded(const FInputActionValue& Value)
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->CancelAbilities(&CrouchTags);
+	}
+}
+
 bool AGASCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect,
                                               FGameplayEffectContextHandle InEffectContext)
 {
@@ -222,10 +252,11 @@ bool AGASCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effec
 void AGASCharacter::PawnClientRestart()
 {
 	Super::PawnClientRestart();
-	
-	if(APlayerController* PC = Cast<APlayerController>(GetController()))
+
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
-		if(UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<
+			UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
 			Subsystem->ClearAllMappings();
 
@@ -238,10 +269,45 @@ void AGASCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
-	if(AbilitySystemComponent)
+	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->RemoveActiveEffectsWithTags(InAirTags);
 	}
+}
+
+void AGASCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	if (!CrouchStateEffect.Get()) return;
+
+	if (AbilitySystemComponent)
+	{
+		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+		
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
+			CrouchStateEffect, 1, EffectContext);
+		if (SpecHandle.IsValid())
+		{
+			FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->
+				ApplyGameplayEffectSpecToSelf(
+					*SpecHandle.Data.Get());
+			if (!ActiveGEHandle.WasSuccessfullyApplied())
+			{
+				ABILITY_LOG(Log, TEXT("Ability %s failed to apply crouch effect %s"), *GetName(),
+				            *GetNameSafe(CrouchStateEffect));
+			}
+		}
+	}
+}
+
+void AGASCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	if (AbilitySystemComponent && CrouchStateEffect.Get())
+	{
+		AbilitySystemComponent->RemoveActiveGameplayEffectBySourceEffect(CrouchStateEffect, AbilitySystemComponent);
+	}
+
+	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
 }
 
 void AGASCharacter::GiveAbilities()

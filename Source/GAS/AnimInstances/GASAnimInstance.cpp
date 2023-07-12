@@ -31,3 +31,31 @@ UAnimSequenceBase* UGASAnimInstance::GetIdleAnimation() const
 	
 	return DefaultCharacterAnimDataAsset ? DefaultCharacterAnimDataAsset->CharacterAnimationData.IdleAnimationAsset : nullptr;
 }
+
+UBlendSpace* UGASAnimInstance::GetCrouchLocomotionBlendSpace() const
+{
+	if(const AGASCharacter* Character = Cast<AGASCharacter>(GetOwningActor()))
+	{
+		const FCharacterData CharacterData = Character->GetCharacterData();
+		if(CharacterData.CharacterAnimDataAsset)
+		{
+			return CharacterData.CharacterAnimDataAsset->CharacterAnimationData.CrouchMovementBlendspace;
+		}
+	}
+	
+	return DefaultCharacterAnimDataAsset ? DefaultCharacterAnimDataAsset->CharacterAnimationData.CrouchMovementBlendspace : nullptr;
+}
+
+UAnimSequenceBase* UGASAnimInstance::GetCrouchIdleAnimation() const
+{
+	if(const AGASCharacter* Character = Cast<AGASCharacter>(GetOwningActor()))
+	{
+		const FCharacterData CharacterData = Character->GetCharacterData();
+		if(CharacterData.CharacterAnimDataAsset)
+		{
+			return CharacterData.CharacterAnimDataAsset->CharacterAnimationData.CrouchIdleAnimationAsset;
+		}
+	}
+	
+	return DefaultCharacterAnimDataAsset ? DefaultCharacterAnimDataAsset->CharacterAnimationData.CrouchIdleAnimationAsset : nullptr;
+}

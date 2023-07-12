@@ -190,12 +190,16 @@ void AGASCharacter::OnLookUpAction(const FInputActionValue& Value)
 
 void AGASCharacter::OnJumpActionStarted(const FInputActionValue& Value)
 {
-	Jump();
+	FGameplayEventData Payload;
+	Payload.Instigator = this;
+	Payload.EventTag = JumpEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, JumpEventTag, Payload);
 }
 
 void AGASCharacter::OnJumpActionEnded(const FInputActionValue& Value)
 {
-	StopJumping();
+	//StopJumping();
 }
 
 bool AGASCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect,
@@ -227,6 +231,16 @@ void AGASCharacter::PawnClientRestart()
 
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
+	}
+}
+
+void AGASCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	if(AbilitySystemComponent)
+	{
+		AbilitySystemComponent->RemoveActiveEffectsWithTags(InAirTags);
 	}
 }
 

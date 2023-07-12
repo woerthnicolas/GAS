@@ -49,7 +49,10 @@ protected:
 	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext);
 
 	virtual void PawnClientRestart() override;
-	
+
+public:
+	virtual void Landed(const FHitResult& Hit) override;
+
 protected:
 	
 	void GiveAbilities();
@@ -128,5 +131,15 @@ protected:
 	void OnJumpActionStarted(const FInputActionValue& Value);
 
 	void OnJumpActionEnded(const FInputActionValue& Value);
+
+	// Gameplay Events
+	
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag JumpEventTag;
+
+	//Gameplay Tags
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTagContainer InAirTags;
 };
 

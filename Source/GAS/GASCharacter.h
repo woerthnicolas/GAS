@@ -8,6 +8,7 @@
 #include "AbilitySystemInterface.h"
 #include "ActionGameTypes.h"
 #include "InputActionValue.h"
+#include "ActorComponents/GAS_MotionWarpingComponent.h"
 #include "GASCharacter.generated.h"
 
 class UFootstepsComponent;
@@ -18,6 +19,9 @@ class UGASAttributeSetBase;
 
 class UGameplayEffect;
 class UGameplayAbility;
+
+class UGAS_MotionWarpingComponent;
+class UGASCharacterMovementComponent;
 
 UCLASS(config=Game)
 class AGASCharacter : public ACharacter, public IAbilitySystemInterface
@@ -69,6 +73,11 @@ protected:
 	
 	UPROPERTY(Transient)
 	UGASAttributeSetBase* AttributeSet;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MotionWarp")
+	UGAS_MotionWarpingComponent* ActionGameMotionWarpingComponent;
+
+	UGASCharacterMovementComponent* AGCharacterMovementComponent;
 	
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -88,6 +97,8 @@ public:
 	void SetCharacterData(const FCharacterData& InCharacterData);
 
 	UFootstepsComponent* GetFootstepsComponent() const;
+
+	UGAS_MotionWarpingComponent* GetMotionWarpingComponent() const;
 
 	void OnMaxMovementSpeedChanged(const FOnAttributeChangeData& Data);
 

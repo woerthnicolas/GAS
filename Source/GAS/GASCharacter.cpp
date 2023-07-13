@@ -8,7 +8,6 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/Attribute/GASAttributeSetBase.h"
 #include "AbilitySystem/Components/GASAbilitySystemComponentBase.h"
 #include "ActorComponents/FootstepsComponent.h"
@@ -71,6 +70,10 @@ AGASCharacter::AGASCharacter(const FObjectInitializer& ObjectInitializer): Super
 	AttributeSet = CreateDefaultSubobject<UGASAttributeSetBase>(TEXT("DefaultAttributeSet"));
 
 	FootstepsComponent = CreateDefaultSubobject<UFootstepsComponent>(TEXT("FootstepsComponent"));
+
+	AGCharacterMovementComponent = Cast<UGASCharacterMovementComponent>(GetCharacterMovement());
+
+	ActionGameMotionWarpingComponent = CreateDefaultSubobject<UGAS_MotionWarpingComponent>(TEXT("ActionGameMotionWarpingComponent"));
 }
 
 void AGASCharacter::PostInitializeComponents()
@@ -161,6 +164,11 @@ UFootstepsComponent* AGASCharacter::GetFootstepsComponent() const
 	return FootstepsComponent;
 }
 
+UGAS_MotionWarpingComponent* AGASCharacter::GetMotionWarpingComponent() const
+{
+	return ActionGameMotionWarpingComponent;
+}
+
 void AGASCharacter::OnMaxMovementSpeedChanged(const FOnAttributeChangeData& Data)
 {
 	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
@@ -218,11 +226,13 @@ void AGASCharacter::OnLookUpAction(const FInputActionValue& Value)
 
 void AGASCharacter::OnJumpActionStarted(const FInputActionValue& Value)
 {
-	FGameplayEventData Payload;
-	Payload.Instigator = this;
-	Payload.EventTag = JumpEventTag;
+	// FGameplayEventData Payload;
+	// Payload.Instigator = this;
+	// Payload.EventTag = JumpEventTag;
+	//
+	// UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, JumpEventTag, Payload);
 
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, JumpEventTag, Payload);
+	AGCharacterMovementComponent->TryTraversal(AbilitySystemComponent);
 }
 
 void AGASCharacter::OnJumpActionEnded(const FInputActionValue& Value)

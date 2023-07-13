@@ -66,6 +66,8 @@ AGASCharacter::AGASCharacter(const FObjectInitializer& ObjectInitializer): Super
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &ThisClass::OnMaxMovementSpeedChanged);
+
 	AttributeSet = CreateDefaultSubobject<UGASAttributeSetBase>(TEXT("DefaultAttributeSet"));
 
 	FootstepsComponent = CreateDefaultSubobject<UFootstepsComponent>(TEXT("FootstepsComponent"));
@@ -132,6 +134,13 @@ void AGASCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 			PlayerEnhancedInputComponent->BindAction(CrouchInputAction, ETriggerEvent::Completed, this,
 			                                         &AGASCharacter::OnCrouchActionEnded);
 		}
+		if (SprintInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(SprintInputAction, ETriggerEvent::Started, this,
+			                                         &AGASCharacter::OnSprintActionStarted);
+			PlayerEnhancedInputComponent->BindAction(SprintInputAction, ETriggerEvent::Completed, this,
+			                                         &AGASCharacter::OnSprintActionEnded);
+		}
 	}
 }
 
@@ -150,6 +159,11 @@ void AGASCharacter::SetCharacterData(const FCharacterData& InCharacterData)
 UFootstepsComponent* AGASCharacter::GetFootstepsComponent() const
 {
 	return FootstepsComponent;
+}
+
+void AGASCharacter::OnMaxMovementSpeedChanged(const FOnAttributeChangeData& Data)
+{
+	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
 }
 
 void AGASCharacter::OnRep_CharacterData()
@@ -229,6 +243,22 @@ void AGASCharacter::OnCrouchActionEnded(const FInputActionValue& Value)
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->CancelAbilities(&CrouchTags);
+	}
+}
+
+void AGASCharacter::OnSprintActionStarted(const FInputActionValue& Value)
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->TryActivateAbilitiesByTag(SprintTags, true);
+	}
+}
+
+void AGASCharacter::OnSprintActionEnded(const FInputActionValue& Value)
+{
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->CancelAbilities(&SprintTags);
 	}
 }
 

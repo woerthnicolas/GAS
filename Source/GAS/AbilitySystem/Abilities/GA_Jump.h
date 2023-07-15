@@ -27,4 +27,10 @@ protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	                             const FGameplayAbilityActivationInfo ActivationInfo,
 	                             const FGameplayEventData* TriggerEventData) override;
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag WallRunStateTag;
+
+	UPROPERTY(EditDefaultsOnly)
+	float OffWallJumpStrength = 100.f;
 };

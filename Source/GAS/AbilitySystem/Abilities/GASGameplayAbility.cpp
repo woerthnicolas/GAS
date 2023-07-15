@@ -87,7 +87,7 @@ void UGASGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-AGASCharacter* UGASGameplayAbility::GetCharacterFromActorInfo()
+AGASCharacter* UGASGameplayAbility::GetCharacterFromActorInfo() const
 {
 	return Cast<AGASCharacter>(GetAvatarActorFromActorInfo());
 }

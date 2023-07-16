@@ -2,11 +2,18 @@
 
 
 #include "InventoryItemInstance.h"
+
+#include "GASBlueprintFunctionLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 void UInventoryItemInstance::Init(TSubclassOf<UItemStaticData> InItemStaticDataClass)
 {
 	ItemStaticDataClass = InItemStaticDataClass;
+}
+
+const UItemStaticData* UInventoryItemInstance::GetItemStaticData() const
+{
+	return UGASBlueprintFunctionLibrary::GetItemStaticData(ItemStaticDataClass);
 }
 
 void UInventoryItemInstance::OnRep_Equipped()

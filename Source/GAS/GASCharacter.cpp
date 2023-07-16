@@ -16,6 +16,7 @@
 #include "Net/UnrealNetwork.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputModule.h"
+#include "ActorComponents/InventoryComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AGASCharacter
@@ -74,6 +75,9 @@ AGASCharacter::AGASCharacter(const FObjectInitializer& ObjectInitializer): Super
 	AGCharacterMovementComponent = Cast<UGASCharacterMovementComponent>(GetCharacterMovement());
 
 	ActionGameMotionWarpingComponent = CreateDefaultSubobject<UGAS_MotionWarpingComponent>(TEXT("ActionGameMotionWarpingComponent"));
+
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+	InventoryComponent->SetIsReplicated(true);
 }
 
 void AGASCharacter::PostInitializeComponents()
@@ -397,4 +401,5 @@ void AGASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AGASCharacter, CharacterData);
+	DOREPLIFETIME(AGASCharacter, InventoryComponent);
 }

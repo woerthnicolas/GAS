@@ -89,6 +89,4 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FName Name;
-
-	
 };

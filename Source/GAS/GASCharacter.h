@@ -11,6 +11,7 @@
 #include "ActorComponents/GAS_MotionWarpingComponent.h"
 #include "GASCharacter.generated.h"
 
+class UInventoryComponent;
 class UFootstepsComponent;
 class UCharacterDataAsset;
 struct FCharacterData;
@@ -22,6 +23,7 @@ class UGameplayAbility;
 
 class UGAS_MotionWarpingComponent;
 class UGASCharacterMovementComponent;
+class UInventoryComponent;
 
 UCLASS(config=Game)
 class AGASCharacter : public ACharacter, public IAbilitySystemInterface
@@ -182,5 +184,8 @@ protected:
 
 	// Delegates
 	FDelegateHandle MaxMovementSpeedChangedDelegateHandle;
+
+	UPROPERTY(EditAnywhere, Replicated)
+	UInventoryComponent* InventoryComponent = nullptr;
 };
 

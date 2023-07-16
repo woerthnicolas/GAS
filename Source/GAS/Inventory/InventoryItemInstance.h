@@ -10,14 +10,17 @@ class UItemStaticData;
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class GAS_API UInventoryItemInstance : public UObject
 {
 	GENERATED_BODY()
 public:
 	virtual void Init(TSubclassOf<UItemStaticData> InItemStaticDataClass);
-protected:
+
 	virtual bool IsSupportedForNetworking() const override { return true; };
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	const UItemStaticData* GetItemStaticData() const;
 
 	UPROPERTY(Replicated)
 	TSubclassOf<UItemStaticData> ItemStaticDataClass;
@@ -30,6 +33,4 @@ protected:
 
 	virtual void OnEquipped();
 	virtual void OnUnequipped();
-
-	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const override;
 };

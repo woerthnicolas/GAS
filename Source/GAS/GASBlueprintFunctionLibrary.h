@@ -19,5 +19,4 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static const UItemStaticData* GetItemStaticData(TSubclassOf<UItemStaticData> ItemDataClass);
-	
 };

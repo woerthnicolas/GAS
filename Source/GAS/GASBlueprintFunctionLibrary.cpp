@@ -7,7 +7,7 @@ const UItemStaticData* UGASBlueprintFunctionLibrary::GetItemStaticData(TSubclass
 {
 	if(IsValid(ItemDataClass))
 	{
-		return GetDefault<UItemStaticData>(UItemStaticData::StaticClass()) ;
+		return GetDefault<UItemStaticData>(ItemDataClass);
 	}
 
 	return nullptr;

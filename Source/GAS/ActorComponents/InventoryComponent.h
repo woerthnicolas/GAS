@@ -21,6 +21,17 @@ public:
 
 	virtual bool ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
+	UFUNCTION(BlueprintCallable)
+	void AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	UFUNCTION(BlueprintCallable)
+	void RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	UFUNCTION(BlueprintCallable)
+	void EquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	UFUNCTION(BlueprintCallable)
+	void UnequipItem();
+	UFUNCTION(BlueprintCallable)
+	UInventoryItemInstance* GetEquippedItem() const;
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -30,6 +41,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	TArray<TSubclassOf<UItemStaticData>> DefaultItems;
+
+	UPROPERTY(Replicated)
+	UInventoryItemInstance* CurrentItem = nullptr;
 
 public:
 	// Called every frame

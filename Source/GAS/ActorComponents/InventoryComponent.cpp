@@ -39,26 +39,13 @@ void UInventoryComponent::InitializeComponent()
 		{
 			InventoryList.AddItem(ItemClass);
 		}
-	}
-}
 
-bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
-{
-	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
-
-	for (FInventoryListItem& Item : InventoryList.GetItemsRef())
-	{
-		UInventoryItemInstance* ItemInstance = Item.ItemInstance;
-
-		if(IsValid(ItemInstance))
+		if(InventoryList.GetItemsRef().Num())
 		{
-			WroteSomething = Channel->ReplicateSubobject(ItemInstance, *Bunch, *RepFlags);
+			EquipItem(InventoryList.GetItemsRef()[0].ItemInstance->ItemStaticDataClass);
 		}
 	}
-
-	return WroteSomething;
 }
-
 
 // Called when the game starts
 void UInventoryComponent::BeginPlay()
@@ -68,7 +55,6 @@ void UInventoryComponent::BeginPlay()
 	// ...
 	
 }
-
 
 // Called every frame
 void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -92,10 +78,72 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	}
 }
 
+void UInventoryComponent::AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
+{
+	InventoryList.AddItem(InItemStaticDataClass);
+}
+
+void UInventoryComponent::RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
+{
+	InventoryList.RemoveItem(InItemStaticDataClass);
+}
+
+void UInventoryComponent::EquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
+{
+	if (GetOwner()->HasAuthority())
+	{
+		for (auto Item : InventoryList.GetItemsRef())
+		{
+			if(Item.ItemInstance->ItemStaticDataClass == InItemStaticDataClass)
+			{
+				Item.ItemInstance->OnEquipped(GetOwner());
+
+				CurrentItem = Item.ItemInstance;
+			
+				break;
+			}
+		}
+	}
+}
+
+void UInventoryComponent::UnequipItem()
+{
+	if (GetOwner()->HasAuthority())
+	{
+		if(IsValid(CurrentItem))
+		{
+			CurrentItem->OnUnequipped();
+			CurrentItem = nullptr;
+		}
+	}
+}
+
+UInventoryItemInstance* UInventoryComponent::GetEquippedItem() const
+{
+	return CurrentItem;
+}
+
+bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	for (FInventoryListItem& Item : InventoryList.GetItemsRef())
+	{
+		UInventoryItemInstance* ItemInstance = Item.ItemInstance;
+
+		if(IsValid(ItemInstance))
+		{
+			WroteSomething = Channel->ReplicateSubobject(ItemInstance, *Bunch, *RepFlags);
+		}
+	}
+
+	return WroteSomething;
+}
 
 void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UInventoryComponent, InventoryList);
+	DOREPLIFETIME(UInventoryComponent, CurrentItem);
 }

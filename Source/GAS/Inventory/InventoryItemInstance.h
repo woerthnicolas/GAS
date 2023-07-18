@@ -6,6 +6,7 @@
 #include "UObject/Object.h"
 #include "InventoryItemInstance.generated.h"
 
+class AItemActor;
 class UItemStaticData;
 /**
  * 
@@ -31,6 +32,10 @@ public:
 	UFUNCTION()
 	void OnRep_Equipped();
 
-	virtual void OnEquipped();
+	virtual void OnEquipped(AActor* InOwner = nullptr);
 	virtual void OnUnequipped();
+
+protected:
+	UPROPERTY(Replicated)
+	AItemActor* ItemActor = nullptr;
 };

@@ -18,7 +18,8 @@ class GAS_API UInventoryItemInstance : public UObject
 public:
 	virtual void Init(TSubclassOf<UItemStaticData> InItemStaticDataClass);
 
-	virtual bool IsSupportedForNetworking() const override { return true; };
+	virtual bool IsSupportedForNetworking() const override { return true; }
+	
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	const UItemStaticData* GetItemStaticData() const;
@@ -34,6 +35,7 @@ public:
 
 	virtual void OnEquipped(AActor* InOwner = nullptr);
 	virtual void OnUnequipped();
+	virtual void OnDropped();
 
 protected:
 	UPROPERTY(Replicated)

@@ -33,6 +33,7 @@ void UInventoryItemInstance::OnEquipped(AActor* InOwner)
 		ItemActor = World->SpawnActorDeferred<AItemActor>(StaticData->ItemActorClass, Transform, InOwner);;
 		ItemActor->Init(this);
 
+		ItemActor->OnEquipped();
 		ItemActor->FinishSpawning(Transform);
 
 		ACharacter* Character = Cast<ACharacter>(InOwner);
@@ -40,7 +41,9 @@ void UInventoryItemInstance::OnEquipped(AActor* InOwner)
 		{
 			ItemActor->AttachToComponent(SkeletalMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, StaticData->AttachmentSocket);
 		}
-	}	
+	}
+
+	bEquipped = true;
 }
 
 void UInventoryItemInstance::OnUnequipped()
@@ -50,6 +53,18 @@ void UInventoryItemInstance::OnUnequipped()
 		ItemActor->Destroy();
 		ItemActor = nullptr;
 	}
+
+	bEquipped = false;
+}
+
+void UInventoryItemInstance::OnDropped()
+{
+	if(ItemActor)
+	{
+		ItemActor->OnDropped();
+	}
+
+	bEquipped = false;
 }
 
 void UInventoryItemInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

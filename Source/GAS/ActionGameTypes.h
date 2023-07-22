@@ -18,10 +18,10 @@ struct FCharacterData
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	TArray<TSubclassOf<class UGameplayEffect>> Effects;
+	TArray<TSubclassOf<UGameplayEffect>> Effects;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	TArray<TSubclassOf<class UGameplayAbility>> Abilities;
+	TArray<TSubclassOf<UGameplayAbility>> Abilities;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animation")
 	class UCharacterAnimDataAsset* CharacterAnimDataAsset;
@@ -95,4 +95,15 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FName AttachmentSocket = NAME_None;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bCanBeEquipped = false;
+};
+
+UENUM(BlueprintType)
+enum class EItemState : uint8
+{
+	None  UMETA(DisplayName = "None"),
+	Equipped UMETA(DisplayName = "Equipped"),
+	Dropped UMETA(DisplayName = "Dropped"),
 };

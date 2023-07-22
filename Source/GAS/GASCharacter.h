@@ -140,6 +140,15 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly)
 	class UInputAction* SprintInputAction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	class UInputAction* DropItemInputAction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	class UInputAction* EquipNextInputAction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	class UInputAction* UnequipInputAction;
 
 	void OnMoveForwardAction(const FInputActionValue& Value);
 
@@ -160,6 +169,12 @@ protected:
 	void OnSprintActionStarted(const FInputActionValue& Value);
 
 	void OnSprintActionEnded(const FInputActionValue& Value);
+	
+	void OnDropItemTriggered(const FInputActionValue& Value);
+	
+	void OnEquipNextTriggered(const FInputActionValue& Value);
+	
+	void OnUnequipTriggered(const FInputActionValue& Value);
 
 	// Gameplay Events
 	

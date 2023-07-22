@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Inventory/InventoryList.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "InventoryComponent.generated.h"
 
 
@@ -14,6 +15,7 @@ class GAS_API UInventoryComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	
 	// Sets default values for this component's properties
 	UInventoryComponent();
 
@@ -24,18 +26,37 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
 	UFUNCTION(BlueprintCallable)
+	void AddItemInstance(UInventoryItemInstance* InItemInstance);
+	UFUNCTION(BlueprintCallable)
 	void RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
 	UFUNCTION(BlueprintCallable)
 	void EquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
 	UFUNCTION(BlueprintCallable)
+	void EquipItemInstance(UInventoryItemInstance* InItemInstance);
+	UFUNCTION(BlueprintCallable)
 	void UnequipItem();
 	UFUNCTION(BlueprintCallable)
-	UInventoryItemInstance* GetEquippedItem() const;
-	
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
+	void DropItem();
 
+	UFUNCTION(BlueprintCallable)
+	void EquipNext();
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE UInventoryItemInstance* GetEquippedItem() const { return CurrentItem; };
+
+	virtual void GameplayEventCallback(const FGameplayEventData* Payload);
+
+	UFUNCTION()
+	void AddInventoryTags();
+
+	static FGameplayTag EquipItemActorTag;
+	static FGameplayTag DropItemTag;
+	static FGameplayTag EquipNextTag;
+	static FGameplayTag UnequipTag;
+	
+
+protected:
+	
 	UPROPERTY(Replicated)
 	FInventoryList InventoryList;
 
@@ -44,6 +65,11 @@ protected:
 
 	UPROPERTY(Replicated)
 	UInventoryItemInstance* CurrentItem = nullptr;
+
+	void HandleGameplayEventInternal(FGameplayEventData Payload);
+
+	UFUNCTION(Server, Reliable)
+	void ServerHandleGameplayTagEvent(FGameplayEventData Payload);
 
 public:
 	// Called every frame

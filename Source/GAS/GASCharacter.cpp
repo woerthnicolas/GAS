@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "GASCharacter.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -148,6 +150,21 @@ void AGASCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 			PlayerEnhancedInputComponent->BindAction(SprintInputAction, ETriggerEvent::Completed, this,
 			                                         &AGASCharacter::OnSprintActionEnded);
 		}
+		if (DropItemInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(DropItemInputAction, ETriggerEvent::Triggered, this,
+			                                         &AGASCharacter::OnDropItemTriggered);
+		}
+		if (EquipNextInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(EquipNextInputAction, ETriggerEvent::Triggered, this,
+			                                         &AGASCharacter::OnEquipNextTriggered);
+		}
+		if (UnequipInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(UnequipInputAction, ETriggerEvent::Triggered, this,
+			                                         &AGASCharacter::OnUnequipTriggered);
+		}
 	}
 }
 
@@ -274,6 +291,30 @@ void AGASCharacter::OnSprintActionEnded(const FInputActionValue& Value)
 	{
 		AbilitySystemComponent->CancelAbilities(&SprintTags);
 	}
+}
+
+void AGASCharacter::OnDropItemTriggered(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = UInventoryComponent::DropItemTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, UInventoryComponent::DropItemTag, EventPayload);
+}
+
+void AGASCharacter::OnEquipNextTriggered(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = UInventoryComponent::EquipNextTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, UInventoryComponent::EquipNextTag, EventPayload);
+}
+
+void AGASCharacter::OnUnequipTriggered(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = UInventoryComponent::UnequipTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, UInventoryComponent::UnequipTag, EventPayload);
 }
 
 bool AGASCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect,

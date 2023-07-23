@@ -6,6 +6,8 @@
 #include "Animation/AnimInstance.h"
 #include "GASAnimInstance.generated.h"
 
+class UItemStaticData;
+
 /**
  * 
  */
@@ -15,6 +17,9 @@ class GAS_API UGASAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 protected:
+
+	const UItemStaticData* GetEquippedItemData() const;
+	
 	UFUNCTION(BlueprintCallable, meta = (BlueprintThreadSafe))
 	class UBlendSpace* GetLocomotionBlendSpace() const;
 

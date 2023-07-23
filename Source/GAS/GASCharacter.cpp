@@ -190,6 +190,11 @@ UGAS_MotionWarpingComponent* AGASCharacter::GetMotionWarpingComponent() const
 	return ActionGameMotionWarpingComponent;
 }
 
+UInventoryComponent* AGASCharacter::GetInventoryComponent() const
+{
+	return InventoryComponent;
+}
+
 void AGASCharacter::OnMaxMovementSpeedChanged(const FOnAttributeChangeData& Data)
 {
 	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;

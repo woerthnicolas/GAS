@@ -100,6 +100,8 @@ public:
 
 	UGAS_MotionWarpingComponent* GetMotionWarpingComponent() const;
 
+	UInventoryComponent* GetInventoryComponent() const;
+
 	void OnMaxMovementSpeedChanged(const FOnAttributeChangeData& Data);
 
 protected:

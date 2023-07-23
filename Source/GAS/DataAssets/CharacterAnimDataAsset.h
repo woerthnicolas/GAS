@@ -20,5 +20,4 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	FCharacterAnimationData CharacterAnimationData;
-	
 };

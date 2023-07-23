@@ -43,8 +43,15 @@ void AItemActor::BeginPlay()
 
 			SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 			SphereComponent->SetGenerateOverlapEvents(true);
+
+			InitInternal();
 		}
 	}
+}
+
+void AItemActor::InitInternal()
+{
+	
 }
 
 // Called every frame
@@ -124,6 +131,15 @@ void AItemActor::OnRep_ItemState()
 			SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 			SphereComponent->SetGenerateOverlapEvents(true);
 			break;
+	}
+}
+
+
+void AItemActor::OnRep_ItemInstance(UInventoryItemInstance* OldItemInstance)
+{
+	if(IsValid(ItemInstance) && !IsValid(OldItemInstance))
+	{
+		InitInternal();
 	}
 }
 

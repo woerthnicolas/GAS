@@ -8,7 +8,6 @@
 class AItemActor;
 class UGameplayAbility;
 class UGameplayEffect;
-class UGameplayAbility;
 class UAnimMontage;
 class UNiagaraSystem;
 
@@ -101,8 +100,27 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	FCharacterAnimationData CharacterAnimationData;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<TSubclassOf<UGameplayAbility>> GrantedAbilities;
 };
 
+UCLASS(BlueprintType, Blueprintable)
+class UWeaponStaticData : public UItemStaticData
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<UGameplayEffect> DamageEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	USkeletalMesh* SkeletalMesh;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UStaticMesh* StaticMesh;
+};
 UENUM(BlueprintType)
 enum class EItemState : uint8
 {

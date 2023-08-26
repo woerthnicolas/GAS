@@ -20,6 +20,11 @@ const UItemStaticData* UInventoryItemInstance::GetItemStaticData() const
 	return UGASBlueprintFunctionLibrary::GetItemStaticData(ItemStaticDataClass);
 }
 
+AItemActor* UInventoryItemInstance::GetItemActor() const
+{
+	return ItemActor;
+}
+
 void UInventoryItemInstance::OnRep_Equipped()
 {
 	

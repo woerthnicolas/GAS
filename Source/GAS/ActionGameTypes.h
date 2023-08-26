@@ -120,6 +120,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UStaticMesh* StaticMesh;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimMontage* AttackMontage;
 };
 UENUM(BlueprintType)
 enum class EItemState : uint8

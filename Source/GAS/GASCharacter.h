@@ -151,6 +151,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly)
 	class UInputAction* UnequipInputAction;
+	
+	UPROPERTY(EditDefaultsOnly)
+	class UInputAction* AttackInputAction;
 
 	void OnMoveForwardAction(const FInputActionValue& Value);
 
@@ -178,10 +181,20 @@ protected:
 	
 	void OnUnequipTriggered(const FInputActionValue& Value);
 
+	void OnAttackActionStarted(const FInputActionValue& Value);
+
+	void OnAttackActionEnded(const FInputActionValue& Value);
+
 	// Gameplay Events
 	
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag JumpEventTag;
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag AttackStartedEventTag;
+	
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag AttackEndedEventTag;
 
 	// Gameplay Tags
 

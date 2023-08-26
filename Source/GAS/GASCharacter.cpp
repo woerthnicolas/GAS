@@ -165,6 +165,13 @@ void AGASCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 			PlayerEnhancedInputComponent->BindAction(UnequipInputAction, ETriggerEvent::Triggered, this,
 			                                         &AGASCharacter::OnUnequipTriggered);
 		}
+		if (AttackInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(AttackInputAction, ETriggerEvent::Started, this,
+													 &AGASCharacter::OnAttackActionStarted);
+			PlayerEnhancedInputComponent->BindAction(AttackInputAction, ETriggerEvent::Completed, this,
+													 &AGASCharacter::OnAttackActionEnded);
+		}
 	}
 }
 
@@ -320,6 +327,22 @@ void AGASCharacter::OnUnequipTriggered(const FInputActionValue& Value)
 	EventPayload.EventTag = UInventoryComponent::UnequipTag;
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, UInventoryComponent::UnequipTag, EventPayload);
+}
+
+void AGASCharacter::OnAttackActionStarted(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AttackStartedEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AttackStartedEventTag, EventPayload);
+}
+
+void AGASCharacter::OnAttackActionEnded(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AttackEndedEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AttackEndedEventTag, EventPayload);
 }
 
 bool AGASCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect,

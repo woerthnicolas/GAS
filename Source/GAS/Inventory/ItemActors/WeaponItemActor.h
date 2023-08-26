@@ -18,6 +18,9 @@ class GAS_API AWeaponItemActor : public AItemActor
 
 	const UWeaponStaticData* GetWeaponStaticData() const;
 
+	UFUNCTION(BlueprintPure)
+	FVector GetMuzzleLocation() const;
+
 protected:
 	UPROPERTY()
 	UMeshComponent* MeshComponent = nullptr;

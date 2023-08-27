@@ -46,7 +46,12 @@ protected:
 
 	void TryGrantAbilities(AActor* InOwner = nullptr);
 	void TryRemoveAbilities(AActor* InOwner = nullptr);
+	void TryApplyEffects(AActor* InOwner = nullptr);
+	void TryRemoveEffects(AActor* InOwner = nullptr);
 
 	UPROPERTY()
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilityHandles;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TArray<FActiveGameplayEffectHandle> OngoingEffectHandles;
 };

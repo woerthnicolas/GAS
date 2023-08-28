@@ -28,6 +28,9 @@ void AWeaponItemActor::InitInternal()
 	{
 		if(WeaponStaticData->SkeletalMesh)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("SkeletalMeshName : %s"), *WeaponStaticData->SkeletalMesh->GetName());
+
+			
 			USkeletalMeshComponent* SkeletalComp =
 				NewObject<USkeletalMeshComponent>(
 					this,

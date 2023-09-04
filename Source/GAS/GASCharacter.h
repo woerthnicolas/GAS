@@ -44,7 +44,7 @@ private:
 public:
 	AGASCharacter(const FObjectInitializer& ObjectInitializer);
 
-	virtual void PostInitializeComponents() override;
+	virtual void PostLoad() override;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Input)

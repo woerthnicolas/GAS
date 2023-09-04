@@ -82,13 +82,14 @@ AGASCharacter::AGASCharacter(const FObjectInitializer& ObjectInitializer): Super
 	InventoryComponent->SetIsReplicated(true);
 }
 
-void AGASCharacter::PostInitializeComponents()
+void AGASCharacter::PostLoad()
 {
+	Super::PostLoad();
+	
 	if (IsValid(CharacterDataAsset))
 	{
 		SetCharacterData(CharacterDataAsset->CharacterData);
 	}
-	Super::PostInitializeComponents();
 }
 
 

@@ -7,6 +7,9 @@
 
 #include "GASPhysicalMaterial.generated.h"
 
+class USoundBase;
+class UNiagaraSystem;
+
 UCLASS()
 class GAS_API UGASPhysicalMaterial : public UPhysicalMaterial
 {
@@ -14,5 +17,11 @@ class GAS_API UGASPhysicalMaterial : public UPhysicalMaterial
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicalMaterial")
-	class USoundBase* FootstepSound = nullptr;
+	USoundBase* FootstepSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicalMaterial")
+	USoundBase* PointImpactSound = nullptr;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PhysicalMaterial")
+	UNiagaraSystem* PointImpactVFX = nullptr;
 };

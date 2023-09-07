@@ -9,7 +9,7 @@ public class GAS : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
 			"GameplayAbilities", "GameplayTags", "GameplayTasks", 
-			"PhysicsCore", "EnhancedInput", "MotionWarping", "NetCore", "GameplayTags"
+			"PhysicsCore", "EnhancedInput", "MotionWarping", "NetCore", "GameplayTags", "Niagara"
 		});
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 

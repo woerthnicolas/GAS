@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GASGameplayAbility.h"
 #include "Abilities/GameplayAbility.h"
 #include "GA_InventoryAbility.generated.h"
 
@@ -15,7 +16,7 @@ class UWeaponStaticData;
 class AItemActor;
 
 UCLASS()
-class GAS_API UGA_InventoryAbility : public UGameplayAbility
+class GAS_API UGA_InventoryAbility : public UGASGameplayAbility
 {
 	GENERATED_BODY()
 

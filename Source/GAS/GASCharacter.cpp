@@ -173,6 +173,13 @@ void AGASCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 			PlayerEnhancedInputComponent->BindAction(AttackInputAction, ETriggerEvent::Completed, this,
 													 &AGASCharacter::OnAttackActionEnded);
 		}
+		if (AimInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(AimInputAction, ETriggerEvent::Started, this,
+													 &AGASCharacter::OnAimActionStarted);
+			PlayerEnhancedInputComponent->BindAction(AimInputAction, ETriggerEvent::Completed, this,
+													 &AGASCharacter::OnAimActionEnded);
+		}
 	}
 }
 
@@ -339,6 +346,22 @@ void AGASCharacter::OnAttackActionStarted(const FInputActionValue& Value)
 }
 
 void AGASCharacter::OnAttackActionEnded(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AttackEndedEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AttackEndedEventTag, EventPayload);
+}
+
+void AGASCharacter::OnAimActionStarted(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AimStartedEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AimStartedEventTag, EventPayload);
+}
+
+void AGASCharacter::OnAimActionEnded(const FInputActionValue& Value)
 {
 	FGameplayEventData EventPayload;
 	EventPayload.EventTag = AttackEndedEventTag;

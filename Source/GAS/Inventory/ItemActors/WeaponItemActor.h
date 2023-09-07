@@ -13,7 +13,7 @@ UCLASS()
 class GAS_API AWeaponItemActor : public AItemActor
 {
 	GENERATED_BODY()
-
+public:
 	AWeaponItemActor();
 
 	const UWeaponStaticData* GetWeaponStaticData() const;

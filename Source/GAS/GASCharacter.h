@@ -102,7 +102,11 @@ public:
 
 	UInventoryComponent* GetInventoryComponent() const;
 
+	void StartRagdoll();
+
 	void OnMaxMovementSpeedChanged(const FOnAttributeChangeData& Data);
+
+	void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 
 protected:
 	UPROPERTY(ReplicatedUsing=OnRep_CharacterData)
@@ -113,6 +117,9 @@ protected:
 
 	virtual void InitFromCharacterData(const FCharacterData& InCharacterData, bool bFromReplication = false);
 
+	UFUNCTION()
+	void OnRagdollStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount);
+	
 	UPROPERTY(EditDefaultsOnly)
 	UCharacterDataAsset* CharacterDataAsset;
 
@@ -207,10 +214,13 @@ protected:
 	FGameplayTag AimStartedEventTag;
 	
 	UPROPERTY(EditDefaultsOnly)
-	FGameplayTag AimEndedEventTag;
+	FGameplayTag AimEndedEventTag;;
+	
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag ZeroHealthEventTag;
 
 	// Gameplay Tags
-
+protected:
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer InAirTags;
 	
@@ -219,6 +229,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer SprintTags;
+	
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag RagDollStateTag;
 
 	// Gameplay Effects
 	

@@ -20,6 +20,8 @@
 #include "EnhancedInputModule.h"
 #include "ActorComponents/InventoryComponent.h"
 
+#include "GameplayEffectExtension.h"
+
 //////////////////////////////////////////////////////////////////////////
 // AGASCharacter
 
@@ -69,6 +71,11 @@ AGASCharacter::AGASCharacter(const FObjectInitializer& ObjectInitializer): Super
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &ThisClass::OnMaxMovementSpeedChanged);
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthAttributeChanged);
+
+	AbilitySystemComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("State.Ragdoll"),
+		EGameplayTagEventType::NewOrRemoved)).AddUObject(this, &AGASCharacter::OnRagdollStateTagChanged);
 
 	AttributeSet = CreateDefaultSubobject<UGASAttributeSetBase>(TEXT("DefaultAttributeSet"));
 
@@ -208,6 +215,47 @@ UGAS_MotionWarpingComponent* AGASCharacter::GetMotionWarpingComponent() const
 UInventoryComponent* AGASCharacter::GetInventoryComponent() const
 {
 	return InventoryComponent;
+}
+
+void AGASCharacter::StartRagdoll()
+{
+	USkeletalMeshComponent* SkeletalMesh = GetMesh();
+	
+	if(SkeletalMesh && !SkeletalMesh->IsSimulatingPhysics())
+	{
+		SkeletalMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+		SkeletalMesh->SetSimulatePhysics(true);
+		SkeletalMesh->SetAllPhysicsLinearVelocity(FVector::ZeroVector);
+		SkeletalMesh->SetAllPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+		SkeletalMesh->WakeAllRigidBodies();
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void AGASCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	if(Data.NewValue <= 0 && Data.OldValue > 0)
+	{
+		AGASCharacter* OtherCharacter = nullptr;
+		if(Data.GEModData)
+		{
+			const FGameplayEffectContextHandle& EffectContext = Data.GEModData->EffectSpec.GetEffectContext();
+			OtherCharacter = Cast<AGASCharacter>(EffectContext.GetInstigator());
+		}
+ 
+		FGameplayEventData EventPayLoad;
+		EventPayLoad.EventTag = ZeroHealthEventTag;
+
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, ZeroHealthEventTag, EventPayLoad);
+	}
+}
+
+void AGASCharacter::OnRagdollStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	if(NewCount > 0)
+	{
+		StartRagdoll();
+	}
 }
 
 void AGASCharacter::OnMaxMovementSpeedChanged(const FOnAttributeChangeData& Data)

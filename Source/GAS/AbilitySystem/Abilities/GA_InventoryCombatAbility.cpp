@@ -47,14 +47,14 @@ const bool UGA_InventoryCombatAbility::GetWeaponToFocusTraceResult(float TraceDi
 	FHitResult FocusHit;
 
 	UKismetSystemLibrary::LineTraceSingle(this, CameraTransform.GetLocation(), FocusTraceEnd, TraceType, false,
-	                                      ActorsToIgnore, EDrawDebugTrace::None, FocusHit, true);
+	                                      ActorsToIgnore, EDrawDebugTrace::ForDuration, FocusHit, true);
 
 	FVector MuzzleLocation = WeaponItemActor->GetMuzzleLocation();
 
 	const FVector WeaponTraceEnd = MuzzleLocation + (FocusHit.Location - MuzzleLocation).GetSafeNormal() * TraceDistance;
 
-	UKismetSystemLibrary::LineTraceSingle(this, CameraTransform.GetLocation(), WeaponTraceEnd, TraceType, false,
-										  ActorsToIgnore, EDrawDebugTrace::None, OutHitResult, true);
+	UKismetSystemLibrary::LineTraceSingle(this, MuzzleLocation, WeaponTraceEnd, TraceType, false,
+										  ActorsToIgnore, EDrawDebugTrace::ForDuration, OutHitResult, true);
 	
 	return OutHitResult.bBlockingHit;
 }

@@ -28,7 +28,7 @@ const UItemStaticData* UGA_InventoryAbility::GetEquippedItemStaticData() const
 {
 	UInventoryItemInstance* EquippedItem = GetEquippedItemInstance();
 
-	return  EquippedItem ? EquippedItem->GetItemStaticData() : nullptr;
+	return EquippedItem ? EquippedItem->GetItemStaticData() : nullptr;
 }
 
 const UWeaponStaticData* UGA_InventoryAbility::GetEquippedWeaponStaticData() const

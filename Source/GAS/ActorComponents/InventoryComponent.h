@@ -3,11 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FastArrayTagCounter.h"
 #include "Components/ActorComponent.h"
 #include "Inventory/InventoryList.h"
 #include "Abilities/GameplayAbilityTypes.h"
 #include "InventoryComponent.generated.h"
 
+
+struct FFastArrayTagCounter;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GAS_API UInventoryComponent : public UActorComponent
@@ -29,6 +32,10 @@ public:
 	void AddItemInstance(UInventoryItemInstance* InItemInstance);
 	UFUNCTION(BlueprintCallable)
 	void RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	UFUNCTION(BlueprintCallable)
+	void RemoveItemInstance(UInventoryItemInstance* InItemInstance);
+	UFUNCTION(BlueprintCallable)
+	void RemoveItemWithInventoryTag(FGameplayTag Tag, int32 Count = 1);
 	UFUNCTION(BlueprintCallable)
 	void EquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
 	UFUNCTION(BlueprintCallable)
@@ -53,7 +60,12 @@ public:
 	static FGameplayTag DropItemTag;
 	static FGameplayTag EquipNextTag;
 	static FGameplayTag UnequipTag;
-	
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetInventoryTagCount(FGameplayTag Tag) const;
+
+	UFUNCTION(BlueprintCallable)
+	void AddInventoryTagCount(FGameplayTag InTag, int32 CountDelta);
 
 protected:
 	
@@ -66,6 +78,11 @@ protected:
 	UPROPERTY(Replicated)
 	UInventoryItemInstance* CurrentItem = nullptr;
 
+	UPROPERTY(Replicated)
+	FFastArrayTagCounter InventoryTags;
+
+	TArray<UInventoryItemInstance*> GetAllInstancesWithTag(FGameplayTag Tag);
+	
 	void HandleGameplayEventInternal(FGameplayEventData Payload);
 
 	UFUNCTION(Server, Reliable)

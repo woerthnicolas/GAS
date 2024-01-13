@@ -17,7 +17,7 @@ class GAS_API UInventoryItemInstance : public UObject
 {
 	GENERATED_BODY()
 public:
-	virtual void Init(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	virtual void Init(TSubclassOf<UItemStaticData> InItemStaticDataClass, int32 InQuantity = 1);
 
 	virtual bool IsSupportedForNetworking() const override { return true; }
 	
@@ -26,6 +26,10 @@ public:
 	const UItemStaticData* GetItemStaticData() const;
 	UFUNCTION(BlueprintPure)
 	AItemActor* GetItemActor() const;
+
+	int32 GetQuantity() const { return Quantity; }
+
+	void AddItems(int32 Count);
 
 	UPROPERTY(Replicated)
 	TSubclassOf<UItemStaticData> ItemStaticDataClass;
@@ -43,6 +47,9 @@ public:
 protected:
 	UPROPERTY(Replicated)
 	AItemActor* ItemActor = nullptr;
+
+	UPROPERTY(Replicated)
+	int32 Quantity = 1;
 
 	void TryGrantAbilities(AActor* InOwner = nullptr);
 	void TryRemoveAbilities(AActor* InOwner = nullptr);

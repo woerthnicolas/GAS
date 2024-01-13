@@ -38,7 +38,7 @@ UInventoryComponent::UInventoryComponent()
 	SetIsReplicatedByDefault(true);
 
 	static bool bHandledAddingTags = false;
-	if(!bHandledAddingTags)
+	if (!bHandledAddingTags)
 	{
 		bHandledAddingTags = true;
 		UGameplayTagsManager::Get().OnLastChanceToAddNativeTags().AddUObject(this, &UInventoryComponent::AddInventoryTags);
@@ -124,6 +124,15 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 				                                 FString::Printf(TEXT("Item : %s"), *ItemStaticData->Name.ToString()));
 			}
 		}
+
+		const TArray<FFastArrayTagCounterRecord>& InventoryTagArray = InventoryTags.GetTagArray();
+
+		for (auto TagRecord : InventoryTagArray)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0, FColor::Purple,
+			                                 FString::Printf(TEXT("Tag: %s %d"), *TagRecord.Tag.ToString(), TagRecord.Count)
+			);
+		}
 	}
 }
 
@@ -136,13 +145,144 @@ void UInventoryComponent::AddItemInstance(UInventoryItemInstance* InItemInstance
 {
 	if (GetOwner()->HasAuthority())
 	{
+		TArray<UInventoryItemInstance*> Items = InventoryList.GetAllAvailableInstancesOfType(InItemInstance->ItemStaticDataClass);
+
+		Algo::Sort(Items, [](UInventoryItemInstance* InA, UInventoryItemInstance* InB)
+		           {
+			           return InA->GetQuantity() < InB->GetQuantity();
+		           }
+		);
+
+		const int32 MaxItemStackCount = InItemInstance->GetItemStaticData()->MaxStackCount;
+
+		int32 ItemsLeft = InItemInstance->GetQuantity();
+
+		for (auto Item : Items)
+		{
+			const int32 EmptySlots = MaxItemStackCount - Item->GetQuantity();
+
+			int32 SlotsToAdd = ItemsLeft;
+
+			if (ItemsLeft > EmptySlots)
+			{
+				SlotsToAdd = EmptySlots;
+			}
+
+			ItemsLeft -= SlotsToAdd;
+
+			Item->AddItems(SlotsToAdd);
+			InItemInstance->AddItems(-SlotsToAdd);
+
+			for (FGameplayTag InvTag : Item->GetItemStaticData()->InventoryTags)
+			{
+				InventoryTags.AddTagCount(InvTag, SlotsToAdd);
+			}
+
+			if (ItemsLeft <= 0)
+			{
+				ItemsLeft = 0;
+
+				return;
+			}
+		}
+
+		while (ItemsLeft > MaxItemStackCount)
+		{
+			AddItem(InItemInstance->GetItemStaticData()->GetClass());
+
+			for (FGameplayTag InvTag : InItemInstance->GetItemStaticData()->InventoryTags)
+			{
+				InventoryTags.AddTagCount(InvTag, MaxItemStackCount);
+			}
+
+			ItemsLeft -= MaxItemStackCount;
+			InItemInstance->AddItems(-MaxItemStackCount);
+		}
+
 		InventoryList.AddItem(InItemInstance);
+
+		for (FGameplayTag InvTag : InItemInstance->GetItemStaticData()->InventoryTags)
+		{
+			InventoryTags.AddTagCount(InvTag, InItemInstance->GetQuantity());
+		}
 	}
 }
 
 void UInventoryComponent::RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
 {
 	InventoryList.RemoveItem(InItemStaticDataClass);
+}
+
+void UInventoryComponent::RemoveItemInstance(UInventoryItemInstance* InItemInstance)
+{
+	if (GetOwner()->HasAuthority())
+	{
+		InventoryList.RemoveItem(InItemInstance);
+
+		for (FGameplayTag InvTag : InItemInstance->GetItemStaticData()->InventoryTags)
+		{
+			InventoryTags.AddTagCount(InvTag, -InItemInstance->GetQuantity());
+		}
+	}
+}
+
+void UInventoryComponent::RemoveItemWithInventoryTag(FGameplayTag Tag, int32 Count)
+{
+	if (GetOwner()->HasAuthority())
+	{
+		int32 CountLeft = Count;
+
+		TArray<UInventoryItemInstance*> Items = GetAllInstancesWithTag(Tag);
+
+		Algo::Sort(Items, [](UInventoryItemInstance* InA, UInventoryItemInstance* InB)
+		           {
+			           return InA->GetQuantity() < InB->GetQuantity();
+		           }
+		);
+
+		for (auto Item : Items)
+		{
+			int32 AvailableCount = Item->GetQuantity();
+			int32 ItemsToRemove = CountLeft;
+
+			if (ItemsToRemove >= AvailableCount)
+			{
+				ItemsToRemove = AvailableCount;
+
+				RemoveItemInstance(Item);
+			}
+			else
+			{
+				Item->AddItems(-ItemsToRemove);
+
+				for (FGameplayTag InvTag : Item->GetItemStaticData()->InventoryTags)
+				{
+					InventoryTags.AddTagCount(InvTag, -ItemsToRemove);
+				}
+			}
+
+			CountLeft -= ItemsToRemove;
+		}
+	}
+}
+
+int32 UInventoryComponent::GetInventoryTagCount(FGameplayTag Tag) const
+{
+	return InventoryTags.GetTagCount(Tag);
+}
+
+void UInventoryComponent::AddInventoryTagCount(FGameplayTag InTag, int32 CountDelta)
+{
+	InventoryTags.AddTagCount(InTag, CountDelta);
+}
+
+TArray<UInventoryItemInstance*> UInventoryComponent::GetAllInstancesWithTag(FGameplayTag Tag)
+{
+	TArray<UInventoryItemInstance*> OutInstances;
+
+	OutInstances = InventoryList.GetAllInstancesWithTag(Tag);
+
+	return OutInstances;
 }
 
 void UInventoryComponent::EquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
@@ -289,4 +429,5 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 	DOREPLIFETIME(UInventoryComponent, InventoryList);
 	DOREPLIFETIME(UInventoryComponent, CurrentItem);
+	DOREPLIFETIME(UInventoryComponent, InventoryTags);
 }
